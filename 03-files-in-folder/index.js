@@ -1,12 +1,12 @@
 const fs = require('fs');
-const fsPromices = require('fs/promises');
+const fsPromises = require('fs/promises');
 const path = require('path');
 const { stdout } = process;
 const folderPath = path.join(__dirname, 'secret-folder');
 const ONE_KB = 1024;
 const viewer = (name, ext, size) =>
   stdout.write(`${name} - ${ext} - ${size ? `${size}kb` : size} \n`);
-fsPromices
+fsPromises
   .readdir(folderPath, {
     withFileTypes: true,
   })
