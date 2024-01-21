@@ -9,7 +9,6 @@ const viewer = (name, ext, size) =>
 fsPromices
   .readdir(folderPath, {
     withFileTypes: true,
-    recursive: true,
   })
   .then((resolve) => {
     resolve.forEach((file) =>
