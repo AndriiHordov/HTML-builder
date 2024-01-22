@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 const fs = require('fs');
 const fsPromises = require('fs/promises');
 const path = require('path');
@@ -12,6 +13,7 @@ const messages = {
   nothing: 'Folder already copied and up to date\nNothing to copy=)',
   missing: 'Directory is missing=(\n',
   done: 'Copied ',
+  updateState: 'Update folder state...',
 };
 const folderPath = { source: 'files', dest: 'files-copy' };
 
@@ -27,8 +29,8 @@ const checkDir = (dir) =>
   fsPromises.readdir(dir, {
     withFileTypes: true,
   });
-const copyFiles = (arr) =>
-  arr.forEach((file) => {
+const copyFiles = (array) =>
+  array.forEach((file) => {
     const source = makePath(__dirname, folderPath.source, file);
     const dest = makePath(__dirname, folderPath.dest, file);
     fsPromises.copyFile(source, dest, fs.constants.COPYFILE_FICLONE);
@@ -40,8 +42,28 @@ const checkState = async (source, dest) => {
   const stateOfDest = await checkDir(makePath(__dirname, dest)).then(
     (resolve) => resolve.map((el) => el.name),
   );
-  return stateOfSource.filter((el) => !stateOfDest.includes(el));
+  return [stateOfSource, stateOfDest];
 };
+const updateState = (arr) => {
+  if (arr[0].length > arr[1].length) {
+    return {
+      array: arr[0].filter((file) => !arr[1].includes(file)),
+      flag: true,
+    };
+  } else if (arr[1].length > arr[0].length) {
+    return {
+      array: arr[1].filter((file) => !arr[0].includes(file)),
+      flag: false,
+    };
+  } else {
+    return { array: null, flag: null };
+  }
+};
+const remove = (path) =>
+  fsPromises.rm(path, {
+    recursive: true,
+    force: true,
+  });
 
 fsPromises
   .access(makePath(__dirname, folderPath.dest))
@@ -50,11 +72,24 @@ fsPromises
       stdout.write(messages.exist);
       stdout.write(messages.check);
       checkState(folderPath.source, folderPath.dest).then((resolve) => {
-        if (resolve.length) {
-          stdout.write(generateMessage(messages.update, resolve.length));
-          copyFiles(resolve);
-          stdout.write(generateMessage(messages.done, resolve.length));
+        const { array, flag } = updateState(resolve);
+        if (flag) {
+          stdout.write(generateMessage(messages.update, array.length));
+          copyFiles(array);
+          stdout.write(generateMessage(messages.done, array.length));
+        } else if (array && !flag) {
+          const len = resolve[1].length - resolve[0].length;
+          stdout.write(generateMessage(messages.updateState, len));
+          array.forEach((file) =>
+            remove(makePath(__dirname, folderPath.dest, file)),
+          );
         } else {
+          remove(makePath(__dirname, folderPath.dest)).then(() => {
+            mkDir(folderPath.dest);
+            checkState(folderPath.source, folderPath.dest).then((resolve) => {
+              copyFiles(resolve[0]);
+            });
+          });
           stdout.write(messages.nothing);
         }
       });
@@ -66,7 +101,7 @@ fsPromises
     mkDir(folderPath.dest);
     stdout.write(messages.copy);
     checkState(folderPath.source, folderPath.dest).then((resolve) => {
-      copyFiles(resolve);
-      stdout.write(generateMessage(messages.done, resolve.length));
+      copyFiles(resolve[0]);
+      stdout.write(generateMessage(messages.done, resolve[0].length));
     });
   });
