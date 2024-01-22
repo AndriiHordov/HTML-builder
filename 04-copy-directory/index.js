@@ -1,5 +1,4 @@
 /* eslint-disable prettier/prettier */
-const fs = require('fs');
 const fsPromises = require('fs/promises');
 const path = require('path');
 const { stdout } = process;
@@ -22,7 +21,7 @@ const generateMessage = (part, len) =>
 
 const makePath = (...args) => path.join(...args);
 const mkDir = (dest) =>
-  fsPromises.mkdir(makePath(__dirname, dest), fs.constants.F_OK, () => {
+  fsPromises.mkdir(makePath(__dirname, dest), () => {
     throw new Error(messages.exist);
   });
 const checkDir = (dir) =>
@@ -33,7 +32,7 @@ const copyFiles = (array) =>
   array.forEach((file) => {
     const source = makePath(__dirname, folderPath.source, file);
     const dest = makePath(__dirname, folderPath.dest, file);
-    fsPromises.copyFile(source, dest, fs.constants.COPYFILE_FICLONE);
+    fsPromises.copyFile(source, dest);
   });
 const checkState = async (source, dest) => {
   const stateOfSource = await checkDir(makePath(__dirname, source)).then(
