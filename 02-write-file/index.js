@@ -15,6 +15,9 @@ stdin.on('data', (data) => {
     output.write(data, 'utf-8');
   }
 });
+process.on('SIGINT', () => {
+  process.exit();
+});
 process.on('exit', () => {
   output.close();
   console.log('File modified succesfull!! \nShutting down...');
