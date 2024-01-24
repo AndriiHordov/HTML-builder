@@ -19,8 +19,8 @@ const readDir = async (dir, ext) => {
 };
 const makeContent = async (dir, ext) => {
   const chunks = await readDir(dir, ext);
-  const body = chunks.map(async (promise) => {
-    const data = await readFile(promise.name, 'styles');
+  const body = chunks.map(async (file) => {
+    const data = await readFile(file.name, 'styles');
     return data;
   });
   return body.map(async (el) => await el);
