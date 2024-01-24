@@ -51,14 +51,14 @@ const makeHtml = async (sourceFile, sourceDir, destDir, destFile) => {
     });
   }
 };
-const createStyles = (destDir, destFile) =>
-  fsPromises
-    .open(makePath(__dirname, destDir, destFile), 'a+')
-    .then(
-      async (resolve) =>
-        await resolve.appendFile(await makeContent('styles', '.css')),
-    );
-
+const createStyle = async (destDir, destFile) => {
+  const bundle = await makeContent('styles', '.css');
+  const handle = await fsPromises.open(
+    makePath(__dirname, destDir, destFile),
+    'a+',
+  );
+  handle.appendFile(bundle);
+};
 const copyAssets = async (
   from = makePath(__dirname, 'assets'),
   copyTo = makePath(__dirname, 'project-dist', 'assets'),
@@ -80,5 +80,5 @@ const copyAssets = async (
 
 createDir(makePath(__dirname, 'project-dist'));
 copyAssets();
-createStyles('project-dist', 'style.css');
+createStyle('project-dist', 'style.css');
 makeHtml('template.html', 'components', 'project-dist', 'index.html');
