@@ -1,6 +1,27 @@
 const path = require('path');
 const fsPromises = require('fs/promises');
-
+const names = {
+  templatePage: 'template.html',
+  assetsDir: 'assets',
+  stylesDir: 'styles',
+  resultStyle: 'style.css',
+  mainPage: 'index.html',
+  projectDir: 'project-dist',
+  componentsDir: 'components',
+  pageExt: '.html',
+  styleExt: '.css',
+};
+const {
+  templatePage,
+  assetsDir,
+  stylesDir,
+  resultStyle,
+  mainPage,
+  projectDir,
+  componentsDir,
+  pageExt,
+  styleExt,
+} = names;
 //helper functions
 const makePath = (...args) => path.join(...args);
 const removeContent = async (dest) =>
@@ -20,7 +41,7 @@ const readDir = async (dir, ext) => {
 const makeContent = async (dir, ext) => {
   const chunks = await readDir(dir, ext);
   const body = chunks.map(async (file) => {
-    const data = await readFile(file.name, 'styles');
+    const data = await readFile(file.name, stylesDir);
     return data;
   });
   return body.map(async (el) => await el);
@@ -28,7 +49,7 @@ const makeContent = async (dir, ext) => {
 
 const makeHtml = async (sourceFile, sourceDir, destDir, destFile) => {
   let content = (await readFile(sourceFile)).toString();
-  const sourceHtml = await readDir(sourceDir, '.html');
+  const sourceHtml = await readDir(sourceDir, pageExt);
   const files = sourceHtml.filter((file) => file.isFile());
   if (!files.length) {
     const index = await fsPromises.open(
@@ -38,13 +59,13 @@ const makeHtml = async (sourceFile, sourceDir, destDir, destFile) => {
     index.appendFile(content);
   } else {
     files.forEach(async (file) => {
-      let body = await readFile(file.name, 'components');
+      let body = await readFile(file.name, componentsDir);
       const len = file.name.length - 5;
       const name = file.name.slice(0, len);
       const pattern = `{{${name}}}`;
       content = content.replaceAll(pattern, body.toString().trim());
       const handle = await fsPromises.open(
-        makePath(__dirname, 'project-dist', 'index.html'),
+        makePath(__dirname, projectDir, mainPage),
         'w',
       );
       handle.appendFile(content);
@@ -52,7 +73,7 @@ const makeHtml = async (sourceFile, sourceDir, destDir, destFile) => {
   }
 };
 const createStyle = async (destDir, destFile) => {
-  const bundle = await makeContent('styles', '.css');
+  const bundle = await makeContent(stylesDir, styleExt);
   const handle = await fsPromises.open(
     makePath(__dirname, destDir, destFile),
     'a+',
@@ -60,8 +81,8 @@ const createStyle = async (destDir, destFile) => {
   handle.appendFile(bundle);
 };
 const copyAssets = async (
-  from = makePath(__dirname, 'assets'),
-  copyTo = makePath(__dirname, 'project-dist', 'assets'),
+  from = makePath(__dirname, assetsDir),
+  copyTo = makePath(__dirname, projectDir, assetsDir),
 ) => {
   await removeContent(copyTo);
   await createDir(copyTo);
@@ -78,7 +99,7 @@ const copyAssets = async (
   });
 };
 
-createDir(makePath(__dirname, 'project-dist'));
+createDir(makePath(__dirname, projectDir));
 copyAssets();
-createStyle('project-dist', 'style.css');
-makeHtml('template.html', 'components', 'project-dist', 'index.html');
+createStyle(projectDir, resultStyle);
+makeHtml(templatePage, componentsDir, projectDir, mainPage);
