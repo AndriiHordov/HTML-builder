@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 const path = require('path');
 const fsPromises = require('fs/promises');
 const names = {
@@ -10,8 +11,8 @@ const names = {
   componentsDir: 'components',
   pageExt: '.html',
   styleExt: '.css',
-	writeFlag: 'w',
-	appendFlag: 'a+',
+  writeFlag: 'w',
+  appendFlag: 'a+',
 };
 const {
   templatePage,
@@ -23,8 +24,8 @@ const {
   componentsDir,
   pageExt,
   styleExt,
-	writeFlag,
-	appendFlag
+  writeFlag,
+  appendFlag,
 } = names;
 //helper functions
 const makePath = (...args) => path.join(...args);
