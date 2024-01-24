@@ -26,33 +26,31 @@ const makeContent = async (dir, ext) => {
   return body.map(async (el) => await el);
 };
 
-const makeHtml = (sourceFile, sourceDir, destDir, destFile) => {
-  let content = '';
-  readFile(sourceFile).then((resolve) => {
-    content = resolve.toString();
-    readDir(sourceDir, '.html').then((resolve) => {
-      let files = resolve.filter((file) => file.isFile());
-      if (!files.length) {
-        fsPromises
-          .open(makePath(__dirname, destDir, destFile), 'a+')
-          .then((resolve) => resolve.appendFile(content));
-      } else {
-        files.forEach((file) =>
-          readFile(file.name, 'components').then((resolve) => {
-            let len = file.name.length - 5;
-            let name = file.name.slice(0, len);
-            let pattern = `{{${name}}}`;
-            content = content.replaceAll(pattern, resolve.toString().trim());
-            fsPromises
-              .open(makePath(__dirname, 'project-dist', 'index.html'), 'w')
-              .then((resolve) => resolve.appendFile(content));
-          }),
-        );
-      }
+const makeHtml = async (sourceFile, sourceDir, destDir, destFile) => {
+  let content = (await readFile(sourceFile)).toString();
+  const sourceHtml = await readDir(sourceDir, '.html');
+  const files = sourceHtml.filter((file) => file.isFile());
+  if (!files.length) {
+    const index = await fsPromises.open(
+      makePath(__dirname, destDir, destFile),
+      'a+',
+    );
+    index.appendFile(content);
+  } else {
+    files.forEach(async (file) => {
+      let body = await readFile(file.name, 'components');
+      const len = file.name.length - 5;
+      const name = file.name.slice(0, len);
+      const pattern = `{{${name}}}`;
+      content = content.replaceAll(pattern, body.toString().trim());
+      const handle = await fsPromises.open(
+        makePath(__dirname, 'project-dist', 'index.html'),
+        'w',
+      );
+      handle.appendFile(content);
     });
-  });
+  }
 };
-
 const createStyles = (destDir, destFile) =>
   fsPromises
     .open(makePath(__dirname, destDir, destFile), 'a+')
