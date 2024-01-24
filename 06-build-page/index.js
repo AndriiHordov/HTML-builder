@@ -10,6 +10,8 @@ const names = {
   componentsDir: 'components',
   pageExt: '.html',
   styleExt: '.css',
+	writeFlag: 'w',
+	appendFlag: 'a+',
 };
 const {
   templatePage,
@@ -21,6 +23,8 @@ const {
   componentsDir,
   pageExt,
   styleExt,
+	writeFlag,
+	appendFlag
 } = names;
 //helper functions
 const makePath = (...args) => path.join(...args);
@@ -54,7 +58,7 @@ const makeHtml = async (sourceFile, sourceDir, destDir, destFile) => {
   if (!files.length) {
     const index = await fsPromises.open(
       makePath(__dirname, destDir, destFile),
-      'a+',
+      appendFlag,
     );
     index.appendFile(content);
   } else {
@@ -66,7 +70,7 @@ const makeHtml = async (sourceFile, sourceDir, destDir, destFile) => {
       content = content.replaceAll(pattern, body.toString().trim());
       const handle = await fsPromises.open(
         makePath(__dirname, projectDir, mainPage),
-        'w',
+        writeFlag,
       );
       handle.appendFile(content);
     });
