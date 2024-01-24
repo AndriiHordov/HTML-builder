@@ -4,11 +4,9 @@ const fsPromises = require('fs/promises');
 //helper functions
 const makePath = (...args) => path.join(...args);
 const removeContent = async (dest) =>
-  fsPromises.rm(dest, { recursive: true, force: true });
+  await fsPromises.rm(dest, { recursive: true, force: true });
 const createDir = async (dest) =>
-  fsPromises.mkdir(dest, { recursive: true }, () => {
-    throw new Error('Already exist');
-  });
+  await fsPromises.mkdir(dest, { recursive: true });
 const readFile = async (file, dir = '') => {
   const source = makePath(__dirname, dir, file);
   const body = await fsPromises.readFile(source);
@@ -28,7 +26,7 @@ const makeContent = async (dir, ext) => {
   return body.map(async (el) => await el);
 };
 
-const makeHtml = async (sourceFile, sourceDir, destDir, destFile) => {
+const makeHtml = (sourceFile, sourceDir, destDir, destFile) => {
   let content = '';
   readFile(sourceFile).then((resolve) => {
     content = resolve.toString();
@@ -55,7 +53,7 @@ const makeHtml = async (sourceFile, sourceDir, destDir, destFile) => {
   });
 };
 
-const createStyles = async (destDir, destFile) =>
+const createStyles = (destDir, destFile) =>
   fsPromises
     .open(makePath(__dirname, destDir, destFile), 'a+')
     .then(
@@ -69,18 +67,17 @@ const copyAssets = async (
 ) => {
   await removeContent(copyTo);
   await createDir(copyTo);
-  readDir(from).then((files) =>
-    files.forEach((file) => {
-      const source = makePath(from, file.name);
-      const target = makePath(copyTo, file.name);
-      if (file.isFile()) {
-        fsPromises.copyFile(source, target);
-      } else if (file.isDirectory()) {
-        createDir(target);
-        copyAssets(source, target);
-      }
-    }),
-  );
+  const files = await readDir(from);
+  files.forEach((file) => {
+    const source = makePath(from, file.name);
+    const target = makePath(copyTo, file.name);
+    if (file.isFile()) {
+      fsPromises.copyFile(source, target);
+    } else if (file.isDirectory()) {
+      createDir(target);
+      copyAssets(source, target);
+    }
+  });
 };
 
 createDir(makePath(__dirname, 'project-dist'));
